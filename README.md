@@ -28,9 +28,12 @@ The Arduino component runs on an ESP32 microcontroller and performs the followin
 - Arduino libraries:
   - `WiFi.h`, `WiFiClientSecure.h`
   - `HTTPClient.h`
-  - `ArduinoJson.h`
-  - `TJpg_Decoder`
-  - `TFT_eSPI`
+  - `ArduinoJson.h` by Benoit Blanchon. [ArduinoJson-Github](https://github.com/bblanchon/ArduinoJson.git)
+  - `TJpg_Decoder` by Bodmer. [TJpg_Decoder-Github](https://github.com/Bodmer/TJpg_Decoder.git)
+  - `TFT_eSPI` by Bodmer. [TFT_eSPI-Github](https://github.com/Bodmer/TFT_eSPI.git)
+
+- You can add the libraries through Arduino IDE Library Manager.
+- To install an Arduino library from GitHub **(Recommended)**, download it as a ZIP file and then navigate to Sketch > Include Library > Add .zip Library in the Arduino IDE, and select the downloaded ZIP file.
 
 ### 🔧 Configuration
 
@@ -47,13 +50,21 @@ For more detailed information about the ESP32 to UNO TFT Shield wiring and setup
 **Source**: [ESP32 WROOM-32 and UNO Shield Parallel TFT Displays](https://thesolaruniverse.wordpress.com/2021/06/01/esp32-wroom-32-and-uno-shield-parallel-tft-displays/)  
 *By Floris Wouterlood – The Netherlands – June 1, 2021 –*
 
+### Arduino Sketch
+
+Find and copy the arduino sketch provided at: 
+
+```
+Arduino/
+└── InstaScreen.ino
+```
 
 In your Arduino sketch, update the following variables:
 
 ```cpp
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
-const char* firebase_host = "https://your-project-id.firebaseio.com/";
+const char* firebase_host = "https://your-project-id.firebaseio.com/"; //This is the Firebase RTDB Url
 ```
 
 Make sure your Firebase project allows read access or uses authentication appropriately.
@@ -64,6 +75,10 @@ Make sure your Firebase project allows read access or uses authentication approp
 2. It iteratively downloads `/images/image_COUNT/chunks/N` from Firebase.
 3. All chunks are joined into a single buffer.
 4. The JPEG buffer is passed to `TJpg_Decoder` for rendering on the TFT display.
+
+<div align=center>
+  <img src="https://github.com/user-attachments/assets/330485a7-d288-4071-90ea-a8c359332277" alt="Example output" width="400" height="350">
+</div>
 
 ---
 
@@ -146,4 +161,4 @@ MIT License — see LICENSE for details.
 
 ## 🙌 Credits
 
-Made by Cliff Koome for the InstaScreen project.
+Floris Wouterlood for providing Wiring configuration for esp32 and TFT LCD SHIELD display.
