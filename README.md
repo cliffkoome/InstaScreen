@@ -1,6 +1,22 @@
-# InstaScreen - ESP32 Firebase Image Viewer
+# InstaScreen – ESP32 TFT Display with Firebase Realtime Database
 
-This project demonstrates how to send large JPEG images to **Firebase Realtime Database** in chunks from a computer, and later retrieve, reconstruct, and display them on a **TFT display connected to an ESP32** using the `TJpg_Decoder` library.
+**A complete guide to connecting a TFT LCD (ILI9341) to ESP32 and displaying images stored in Firebase RTDB.**
+
+This project demonstrates how to:
+- Interface an **ESP32** with a **320x240 TFT LCD display** (e.g., ILI9341) using **TFT_eSPI**
+- Upload JPEG images from a PC to **Firebase Realtime Database** in small memory-safe chunks
+- Download, reassemble, and render the images on an **ESP32 display** using `TJpg_Decoder`
+
+Perfect for hobbyists and developers searching for:
+- "How to connect TFT display to ESP32"
+- "ESP32 ILI9341 image display"
+- "Stream JPEG to ESP32 without Firebase Storage"
+- "ESP32 Firebase Realtime Database image viewer"
+
+Supports:
+- ESP32 DevKit / NodeMCU-32S
+- ILI9341 TFT displays (and compatible models)
+- Firebase RTDB (no billing required)
 
 ---
 
@@ -144,6 +160,24 @@ The image will be resized, chunked, and uploaded to:
 ```
 
 Firebase will also have `/images/image_count` set accordingly.
+
+---
+
+## 💡 Why Use Firebase Realtime Database Instead of Firebase Storage?
+
+While Firebase Storage supports direct JPEG uploads and streaming with `TJpg_Decoder`, it now requires billing for most usage.
+
+**Firebase Realtime Database (RTDB)** remains **free** under the Spark plan and allows:
+- Storing image data as hex chunks
+- Downloading and reconstructing on ESP32
+
+This approach avoids storage fees and is ideal for students, makers, and prototypes.
+
+| Feature                | Firebase Storage | Firebase RTDB      |
+|------------------------|------------------|---------------------|
+| Direct JPEG support    | ✅ Yes           | ❌ No               |
+| Free under Spark plan  | ❌ No            | ✅ Yes              |
+| `TJpg_Decoder` support | ✅ Streamable    | ✅ After chunk join |
 
 ---
 
