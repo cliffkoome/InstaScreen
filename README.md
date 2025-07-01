@@ -1,116 +1,146 @@
-# InstaScreen - Image to Firebase Chunker
+# InstaScreen - ESP32 Firebase Image Viewer
 
-This component of the **InstaScreen** project handles the process of preparing and uploading images to Firebase Realtime Database in a format optimized for low-memory microcontrollers like the **ESP32**.
-
----
-
-## 📦 What It Does
-
-The **image-to-firebase-chunker**:
-- Resizes a local JPEG image to fit a 320x240 screen (configurable).
-- Converts the image to raw JPEG bytes.
-- Encodes the image data into a hex string.
-- Splits the hex string into manageable chunks (e.g., 1024 bytes per chunk).
-- Uploads the chunked data to a Firebase Realtime Database using REST API.
-- Automatically updates the `image_count` node to reflect the latest image index.
+This project demonstrates how to send large JPEG images to **Firebase Realtime Database** in chunks from a computer, and later retrieve, reconstruct, and display them on a **TFT display connected to an ESP32** using the `TJpg_Decoder` library.
 
 ---
 
-## 🛠️ Technologies Used
+## 📚 Table of Contents
 
-- **Python 3**
-- [Pillow](https://pillow.readthedocs.io/en/stable/) – for image processing
-- [Requests](https://docs.python-requests.org/) – for HTTP requests to Firebase
-- [python-dotenv](https://pypi.org/project/python-dotenv/) – for managing Firebase secrets
+1. [Arduino Implementation](#arduino-implementation)
+2. [Image Chunker](#image-chunker)
 
 ---
 
-## 📁 Folder Structure
+## 1. Arduino Implementation
+
+The Arduino component runs on an ESP32 microcontroller and performs the following:
+
+- Connects to Wi-Fi and Firebase Realtime Database
+- Fetches the number of image chunks for the current image
+- Downloads and reassembles JPEG image chunks from Firebase
+- Decodes the JPEG image using `TJpg_Decoder`
+- Displays the image on a TFT display using `TFT_eSPI`
+
+### 🔌 Requirements
+
+- ESP32 board (e.g., NodeMCU-32S)
+- 320x240 TFT screen (e.g., ILI9341)
+- Arduino libraries:
+  - `WiFi.h`, `WiFiClientSecure.h`
+  - `HTTPClient.h`
+  - `ArduinoJson.h`
+  - `TJpg_Decoder`
+  - `TFT_eSPI`
+
+### 🔧 Configuration
+
+Wiring configuration can be found at:
+
+```
+Arduino/
+└── Schematic/
+    └── schematic-diagram.png
+```
+
+For more detailed information about the ESP32 to UNO TFT Shield wiring and setup, refer to:
+
+**Source**: [ESP32 WROOM-32 and UNO Shield Parallel TFT Displays](https://thesolaruniverse.wordpress.com/2021/06/01/esp32-wroom-32-and-uno-shield-parallel-tft-displays/)  
+*By Floris Wouterlood – The Netherlands – June 1, 2021 –*
+
+
+In your Arduino sketch, update the following variables:
+
+```cpp
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
+const char* firebase_host = "https://your-project-id.firebaseio.com/";
+```
+
+Make sure your Firebase project allows read access or uses authentication appropriately.
+
+### 🖼️ How it Works
+
+1. ESP32 fetches `/images/image_COUNT/chunk_count` to determine how many chunks exist.
+2. It iteratively downloads `/images/image_COUNT/chunks/N` from Firebase.
+3. All chunks are joined into a single buffer.
+4. The JPEG buffer is passed to `TJpg_Decoder` for rendering on the TFT display.
+
+---
+
+## 2. Image Chunker
+
+This is a Python script that prepares and uploads images from your computer to Firebase in a chunked format suitable for ESP32 consumption.
+
+### 📦 Features
+
+- Resizes images to 320x240 (configurable)
+- Converts them to JPEG
+- Encodes JPEG to hex
+- Splits hex string into chunks (default 1024 bytes)
+- Uploads to Firebase and updates image count
+
+### 🛠️ Technologies
+
+- Python 3
+- `Pillow` for image processing
+- `Requests` for Firebase upload
+- `python-dotenv` for credentials
+
+### 📁 Project Structure
 
 ```plaintext
 image-to-firebase-chunker/
-├── chunker.py          # Main script to resize, chunk, and upload image
-├── images/             # Folder containing input images
-├── .env                # Environment file (not committed)
-└── .gitignore          # File to exclude venv, images, etc.
+├── chunker.py
+├── images/
+├── .env
+└── .gitignore
 ```
 
----
+### 🔐 .env Setup
 
-## ✅ Prerequisites
-
-- Python 3.7+
-- A Firebase Realtime Database (public rules or authenticated access)
-- A valid `.env` file with your Firebase URL
-
----
-
-## 🔐 .env File
-
-Create a `.env` file inside the `image-to-firebase-chunker/` folder:
+Create a `.env` file with the following:
 
 ```env
 FIREBASE_URL=https://your-project-id.firebaseio.com/
 ```
 
-Make sure your Firebase rules allow writing to the database.
+### 🚀 How to Use
 
----
-
-## 📸 How to Use
-
-1. **Install dependencies**:
+1. Install dependencies:
 
 ```bash
 pip install pillow requests python-dotenv
 ```
 
-2. **Place your image** (e.g., `nfs-heat.jpg`) inside the `images/` folder.
-
-3. **Edit config values** in `chunker.py`:
-   - `LOCAL_IMAGE_FILE = "images/nfs-heat.jpg"`
-   - `IMAGE_NUMBER = 1` *(change this to 2, 3, etc. for subsequent uploads)*
-
-4. **Run the script**:
+2. Add an image to the `images/` folder (e.g. `nfs-heat.jpg`)
+3. Edit the script’s `IMAGE_NUMBER` and `LOCAL_IMAGE_FILE`
+4. Run:
 
 ```bash
 python chunker.py
 ```
 
-5. **Result**:
-   - Image will be resized to `320x240`
-   - Uploaded in chunks to:
-     ```
-     /images/image_1/
-         ├── chunk_count: 5
-         └── chunks: [hex_chunk_0, hex_chunk_1, ..., hex_chunk_n]
-     ```
-   - `image_count` will be updated in:
-     ```
-     /images/image_count: 1
-     ```
+The image will be resized, chunked, and uploaded to:
+
+```
+/images/image_1/
+    ├── chunk_count: 5
+    └── chunks: [0, 1, ..., n]
+```
+
+Firebase will also have `/images/image_count` set accordingly.
 
 ---
 
 ## 📲 Why Chunking?
 
-The ESP32 has limited memory. Sending or downloading large image strings in one go can cause memory issues or crashes. Chunking the image makes it possible to:
-- Upload large images to Firebase
-- Later download and reconstruct them piece by piece on the ESP32
-
----
-
-## 🧹 To Do
-
-- [ ] Add support for automatic image numbering
-- [ ] Add CLI options for resizing and quality settings
-- [ ] ESP32 companion code for reassembling and displaying the image
+ESP32 devices have limited RAM. Chunking allows large images to be handled in pieces, preventing memory overflow and enabling smooth display from the cloud.
 
 ---
 
 ## 📜 License
 
-MIT License — see [LICENSE](../LICENSE) for details.
+MIT License — see LICENSE for details.
 
 ---
 
