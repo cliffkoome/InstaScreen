@@ -39,7 +39,7 @@ The Arduino component runs on an ESP32 microcontroller and performs the followin
 
 ### 🔌 Requirements
 
-- ESP32 board (e.g., NodeMCU-32S)
+- ESP32 board (e.g., ESP32-Wroom-32)
 - 320x240 TFT screen (e.g., ILI9341)
 - Arduino libraries:
   - `WiFi.h`, `WiFiClientSecure.h`
