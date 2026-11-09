@@ -18,3 +18,11 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+# Firmware
+.pio/
+firmware/InstaScreen/secrets.h
+
+# Python tooling
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
