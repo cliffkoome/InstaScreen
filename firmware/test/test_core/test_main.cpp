@@ -4,6 +4,7 @@
 
 #include "../../InstaScreen/backoff.h"
 #include "../../InstaScreen/codec.h"
+#include "fixture.h"
 
 namespace {
 
@@ -93,6 +94,32 @@ void test_backoff_doubles_and_caps() {
   TEST_ASSERT_EQUAL(1000, b.fail());
 }
 
+// Decodes chunks produced by the Python uploader exactly as the device does
+// (ImageStore::fetchChunks), then applies the same integrity checks.
+template <size_t N>
+void decodeFixture(const char* const (&chunks)[N], bool base64) {
+  static uint8_t buf[fixture::kSize];
+  size_t written = 0;
+  for (size_t i = 0; i < N; ++i) {
+    const auto r = base64 ? codec::base64Decode(chunks[i], strlen(chunks[i]), buf + written,
+                                                sizeof buf - written)
+                          : codec::hexDecode(chunks[i], strlen(chunks[i]), buf + written,
+                                             sizeof buf - written);
+    TEST_ASSERT_FALSE(r.overflow);
+    written += r.written;
+  }
+  TEST_ASSERT_EQUAL(fixture::kSize, written);
+  TEST_ASSERT_EQUAL_HEX32(fixture::kCrc32, codec::crc32(buf, written));
+  TEST_ASSERT_TRUE(codec::looksLikeJpeg(buf, written));
+}
+
+void test_decodes_uploader_v2_fixture() {
+  TEST_ASSERT_EQUAL(fixture::kChunkCount, sizeof fixture::kBase64Chunks / sizeof(char*));
+  decodeFixture(fixture::kBase64Chunks, true);
+}
+
+void test_decodes_uploader_v1_fixture() { decodeFixture(fixture::kHexChunks, false); }
+
 }  // namespace
 
 void setUp() {}
@@ -109,5 +136,7 @@ int main() {
   RUN_TEST(test_base64_decode_reports_overflow);
   RUN_TEST(test_jpeg_markers);
   RUN_TEST(test_backoff_doubles_and_caps);
+  RUN_TEST(test_decodes_uploader_v2_fixture);
+  RUN_TEST(test_decodes_uploader_v1_fixture);
   return UNITY_END();
 }
