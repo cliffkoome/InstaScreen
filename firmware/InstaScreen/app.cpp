@@ -75,6 +75,11 @@ bool wifiReady() {
 }
 
 void showNext() {
+  // Reuse one TLS session within a slide, but start each slide fresh: the
+  // server may have closed the idle socket during the slide interval, and a
+  // half-closed connection would otherwise surface as a spurious failure.
+  rtdb.reset();
+
   int count = 0;
   FetchError err = store.fetchImageCount(count);
   if (err != FetchError::None) {
